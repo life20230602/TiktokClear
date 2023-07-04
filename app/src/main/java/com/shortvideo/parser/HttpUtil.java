@@ -1,4 +1,4 @@
-package top.lyfzn.music.douyinquick;
+package com.shortvideo.parser;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
