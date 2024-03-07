@@ -1,5 +1,7 @@
 package com.shortvideo.parser;
 
+import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK;
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -14,6 +16,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import com.hjq.permissions.OnPermissionCallback;
+import com.hjq.permissions.Permission;
+import com.hjq.permissions.XXPermissions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,38 +59,27 @@ public class MainActivity extends AppCompatActivity {
                 ad.show();
             }
         });
-        /**
-         * 权限检查、声明
-         */
-        List<String> permisions = new ArrayList<>();
+        XXPermissions.with(this).permission(Permission.MANAGE_EXTERNAL_STORAGE).request(new OnPermissionCallback() {
+            @Override
+            public void onGranted(@NonNull List<String> permissions, boolean allGranted) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (Settings.canDrawOverlays(MainActivity.this)) {
+                        openDY();
+                    } else {
+                        //若没有权限，提示获取.
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+                        Toast.makeText(MainActivity.this, "需要取得权限以使用悬浮窗", Toast.LENGTH_SHORT).show();
+                        startActivity(intent);
+                        finish();
+                    }
 
-        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            permisions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        }
-        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            permisions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-        }
-
-        if (!permisions.isEmpty()) {
-            String[] permisions_s = permisions.toArray(new String[permisions.size()]);
-            ActivityCompat.requestPermissions(MainActivity.this, permisions_s, 1);
-        } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (Settings.canDrawOverlays(MainActivity.this)) {
-                    openDY();
                 } else {
-                    //若没有权限，提示获取.
-                    Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
-                    Toast.makeText(MainActivity.this, "需要取得权限以使用悬浮窗", Toast.LENGTH_SHORT).show();
-                    startActivity(intent);
-                    finish();
+                    //SDK在23以下，不用管.
+                    openDY();
                 }
-
-            } else {
-                //SDK在23以下，不用管.
-                openDY();
             }
-        }
+        });
+
 
     }
 
@@ -95,9 +90,9 @@ public class MainActivity extends AppCompatActivity {
         ContextCompat.startForegroundService(this, intent_service);
         try {
             PackageManager packageManager = getPackageManager();
-            Intent intent = packageManager.getLaunchIntentForPackage("com.ss.android.ugc.aweme");
+            Intent intent = packageManager.getLaunchIntentForPackage("com.ss.android.ugc.trill");
             if (intent == null) {
-                intent = packageManager.getLaunchIntentForPackage("com.ss.android.ugc.trill");
+                intent = packageManager.getLaunchIntentForPackage("com.ss.android.ugc.aweme");
             }
             startActivity(intent);
         } catch (Exception e) {

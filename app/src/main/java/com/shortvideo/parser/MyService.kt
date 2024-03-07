@@ -10,6 +10,7 @@ import android.app.Service
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
@@ -30,6 +31,7 @@ import java.io.File
 class MyService : Service() {
     private var clipboardManager: ClipboardManager? = null
     private var ocm: ClipboardManager.OnPrimaryClipChangedListener? = null
+    private val SERVICE_ID = 1000
     override fun onBind(intent: Intent): IBinder? {
         throw UnsupportedOperationException("Not yet implemented")
     }
@@ -38,6 +40,7 @@ class MyService : Service() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
         super.onCreate()
+
         val notificationManager: NotificationManager =
             getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         var channel: NotificationChannel? = null
@@ -48,7 +51,14 @@ class MyService : Service() {
         )
         notificationManager.createNotificationChannel(channel)
         val notification = Notification.Builder(applicationContext, "DouYin").build()
-        startForeground(1, notification)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            startForeground(SERVICE_ID, notification)
+        } else {
+            startForeground(
+                SERVICE_ID, notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+            )
+        }
         mParserMap["douyin"] = Tiktok()
         mParserMap["tiktok"] = Tiktok()
         initFloatingWindow()

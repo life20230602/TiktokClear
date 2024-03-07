@@ -1,10 +1,24 @@
 package com.shortvideo.parser
 
+import android.webkit.URLUtil
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.util.regex.Pattern
+
+fun String.extractUrls(): List<String> {
+    val urls: MutableList<String> = ArrayList()
+    val pattern = Pattern.compile(
+        "\\b(https?|ftp|file)://[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%=~_|]",
+        Pattern.CASE_INSENSITIVE
+    )
+    val matcher = pattern.matcher(this)
+    while (matcher.find()) {
+        urls.add(this.substring(matcher.start(0), matcher.end(0)))
+    }
+    return urls
+}
 
 abstract class ShortVideoParser {
-
     abstract suspend fun getDownloadUrl(url: String): String
 
     companion object {
@@ -17,18 +31,22 @@ abstract class ShortVideoParser {
         private const val douYinReferer = "https://www.douyin.com/"
 
         fun createRequest(url: String): Request.Builder? {
-            if (url.contains("douyin")) {
+            var newUrl = url
+            if(!URLUtil.isHttpUrl(url) && !URLUtil.isHttpsUrl(url)){
+                newUrl = url.extractUrls()[0]
+            }
+            if (newUrl.contains("douyin")) {
                 val builder = Request.Builder()
                 builder.removeHeader("User-Agent")
                 return builder
-                    .url(url)
+                    .url(newUrl)
                     .addHeader("User-Agent", douYinUA)
                     .addHeader("Accept", douYinAccept)
                     .addHeader("Referer", douYinReferer)
-            } else if (url.contains("tiktok")) {
+            } else if (newUrl.contains("tiktok")) {
                 val builder = Request.Builder()
                 builder.removeHeader("User-Agent")
-                return builder.url(url).addHeader("User-Agent", tiktokUA)
+                return builder.url(newUrl).addHeader("User-Agent", tiktokUA)
             }
             return null
         }
