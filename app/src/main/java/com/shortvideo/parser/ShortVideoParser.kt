@@ -48,7 +48,7 @@ abstract class ShortVideoParser {
                 builder.removeHeader("User-Agent")
                 return builder.url(newUrl).addHeader("User-Agent", tiktokUA)
             }
-            return null
+            return Request.Builder().url(url)
         }
     }
 

@@ -60,7 +60,7 @@ class MyService : Service() {
             )
         }
         mParserMap["douyin"] = Tiktok()
-        mParserMap["tiktok"] = Tiktok()
+        mParserMap["tiktok"] = Tiktok2()
         initFloatingWindow()
         Toast.makeText(
             this,
