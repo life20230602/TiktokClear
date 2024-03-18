@@ -21,6 +21,7 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
+import android.webkit.URLUtil
 import android.widget.ImageView
 import android.widget.Toast
 import kotlinx.coroutines.Dispatchers
@@ -96,6 +97,10 @@ class MyService : Service() {
                         GlobalScope.launch(Dispatchers.Main){
                             progressDialog.dismiss()
                             if (!TextUtils.isEmpty(downloadUrl)) {
+                                if(!URLUtil.isValidUrl(downloadUrl)){
+                                    Toast.makeText(applicationContext,downloadUrl,Toast.LENGTH_SHORT).show()
+                                    return@launch
+                                }
                                 val ab = AlertDialog.Builder(applicationContext)
                                     .setTitle("DouYinQuick")
                                     .setMessage("""检测到抖音分享视频:(${System.currentTimeMillis()}).mp4""".trimIndent())

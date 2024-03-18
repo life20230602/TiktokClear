@@ -1,53 +1,43 @@
 package com.shortvideo.parser
 
-import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType
-import okhttp3.RequestBody
+import okhttp3.FormBody
 import org.json.JSONObject
 
 
 class Tiktok2 : ShortVideoParser() {
     override suspend fun getDownloadUrl(url: String): String = withContext(Dispatchers.IO) {
-        createRequest("https://www.watermarkremover.io/api/video")?.let {
-            val jsonObject = JSONObject()
-            jsonObject.put("videoUrl",url)
-            val requestBody =
-                RequestBody.create(MediaType.parse("application/json"), jsonObject.toString())
-            val request = it.post(requestBody).build()
-
-            val response = sClient.newCall(request).execute()
-            if (response.isSuccessful) {
-                response.body()?.let { body ->
-                    return@withContext JSONObject(body.string()).optString("nowm")
+        createRequest("https://myapi.app/api/analyze")?.let {
+            try {
+                val builder = FormBody.Builder()
+                builder.add("url",url)
+                builder.add("sitename","tikmate.cc")
+                val request = it.header("User-Agent","Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36").header("Referer","https://tikmate.cc/")
+                    .post(builder.build()).build()
+                val response = sClient.newCall(request).execute()
+                if (response.isSuccessful) {
+                    response.body()?.let { body ->
+                        val resultJsonObject = JSONObject(body.string())
+                        val mediasJsonObject = resultJsonObject.getJSONArray("medias")
+                        val length = mediasJsonObject.length()
+                        var maxQualityUrl = ""
+                        var maxQuality = 0
+                        for (i in 0 until length) {
+                            val itemObj = mediasJsonObject.getJSONObject(i)
+                            val quality = itemObj.optString("quality", "0").toInt()
+                            if(quality > maxQuality){
+                                maxQuality = quality
+                                maxQualityUrl = itemObj.optString("url")
+                            }
+                        }
+                        return@withContext "https://myapi.app/api/download?sitename=tikmate.cc&url=$maxQualityUrl"
+                    }
                 }
+            }catch (e : Exception){
+                return@withContext "解析失败，请重试"
             }
         }
         return@withContext ""
-    }
-
-    /**
-     * 转换链接
-     */
-    private fun convertUrl(url: String): String {
-        createRequest(url)?.let {
-            it.removeHeader("User-Agent")
-            val response = sClient.newCall(
-                it.addHeader(
-                    "User-Agent",
-                    "Mozilla/5.0 (Linux; Android 8.0.0; SM-G955U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Mobile Safari/537.36"
-                ).build()
-            ).execute()
-            if (response.isSuccessful) {
-                return response.request().url().url().toString()
-            }
-        }
-        return ""
-    }
-
-    private fun getVideoId(url: String): String? {
-        var convertUrl = convertUrl(url)
-        return Uri.parse(convertUrl).lastPathSegment
     }
 }
