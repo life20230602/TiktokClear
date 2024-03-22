@@ -22,12 +22,10 @@ class Tiktok2 : ShortVideoParser() {
                         val mediasJsonObject = resultJsonObject.getJSONArray("medias")
                         val length = mediasJsonObject.length()
                         var maxQualityUrl = ""
-                        var maxQuality = 0
                         for (i in 0 until length) {
                             val itemObj = mediasJsonObject.getJSONObject(i)
-                            val quality = itemObj.optString("quality", "0").toInt()
-                            if(quality > maxQuality){
-                                maxQuality = quality
+                            val quality = itemObj.optString("quality", "0")
+                            if(quality == "no_watermark"){
                                 maxQualityUrl = itemObj.optString("url")
                             }
                         }
