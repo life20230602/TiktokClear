@@ -1,5 +1,6 @@
 package com.shortvideo.parser
 
+import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.FormBody
@@ -8,28 +9,18 @@ import org.json.JSONObject
 
 class Tiktok2 : ShortVideoParser() {
     override suspend fun getDownloadUrl(url: String): String = withContext(Dispatchers.IO) {
-        createRequest("https://myapi.app/api/analyze")?.let {
+        createRequest("https://api.twitterpicker.com/tiktok/mediav2?id=${Uri.parse(url).lastPathSegment}")?.let {
             try {
-                val builder = FormBody.Builder()
-                builder.add("url",url)
-                builder.add("sitename","tikmate.cc")
-                val request = it.header("User-Agent","Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36").header("Referer","https://tikmate.cc/")
-                    .post(builder.build()).build()
+                val request = it.header("User-Agent","Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    .header("Referer","https://tiktokdownloader.com/")
+                    .get().build()
                 val response = sClient.newCall(request).execute()
                 if (response.isSuccessful) {
                     response.body()?.let { body ->
                         val resultJsonObject = JSONObject(body.string())
-                        val mediasJsonObject = resultJsonObject.getJSONArray("medias")
-                        val length = mediasJsonObject.length()
-                        var maxQualityUrl = ""
-                        for (i in 0 until length) {
-                            val itemObj = mediasJsonObject.getJSONObject(i)
-                            val quality = itemObj.optString("quality", "0")
-                            if(quality == "no_watermark"){
-                                maxQualityUrl = itemObj.optString("url")
-                            }
-                        }
-                        return@withContext "https://myapi.app/api/download?sitename=tikmate.cc&url=$maxQualityUrl"
+                        val mediasJsonObject = resultJsonObject.getJSONObject("video_no_watermark")
+                        val url = mediasJsonObject.getString("url")
+                        return@withContext url
                     }
                 }
             }catch (e : Exception){
