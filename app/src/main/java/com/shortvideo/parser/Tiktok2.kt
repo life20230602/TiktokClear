@@ -1,11 +1,8 @@
 package com.shortvideo.parser
 
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.FormBody
-import okhttp3.MediaType
-import okhttp3.RequestBody
 import org.json.JSONObject
 import java.util.regex.Pattern
 
@@ -25,11 +22,13 @@ class Tiktok2 : ShortVideoParser() {
                         val resultJsonObject = JSONObject(body.string()).getString("data")
                         val pattern = Pattern.compile("[a-zA-z]+://[^\\s]*")
                         val matcher = pattern.matcher(resultJsonObject)
-                        var last = "";
+                        var last = ""
                         while (matcher.find()){
-                            last = matcher.group();
+                            last = matcher.group()
+                            if(last.contains("v16m-default.akamaized.net")){
+                                return@withContext last
+                            }
                         }
-                        Log.e("====", "getDownloadUrl: "+last )
                         return@withContext last
                     }
                 }
